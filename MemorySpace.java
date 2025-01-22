@@ -57,8 +57,21 @@ public class MemorySpace {
 	 *        the length (in words) of the memory block that has to be allocated
 	 * @return the base address of the allocated block, or -1 if unable to allocate
 	 */
-	public int malloc(int length) {		
-		//// Replace the following statement with your code
+	public int malloc(int length) {
+		for ( int i = 0; i < freeList.getSize(); i++ ) {
+			if (freeList.getBlock(i).length >= length) {
+				MemoryBlock mb = new MemoryBlock( freeList.getBlock(i).baseAddress , length);
+				allocatedList.addLast(mb);
+				if (freeList.getBlock(i).length > length) {
+					freeList.getBlock(i).baseAddress += length;
+					freeList.getBlock(i).length -= length;
+				}
+				else {
+					freeList.remove(i);			//////if theres a mistake i might need to change this to a remove blovk function----------------------
+				}
+				return mb.baseAddress;
+			}
+		}
 		return -1;
 	}
 
@@ -71,7 +84,15 @@ public class MemorySpace {
 	 *            the starting address of the block to freeList
 	 */
 	public void free(int address) {
-		//// Write your code here
+		if (0 == allocatedList.getSize()) {
+			throw new IllegalArgumentException ("index must be between 0 and size");
+		}
+		for (int i = 0; i < allocatedList.getSize(); i++) {
+			if (allocatedList.getBlock(i).baseAddress == address) {
+				freeList.addLast(allocatedList.getBlock(i));
+				allocatedList.remove(i);
+			}
+		}
 	}
 	
 	/**
@@ -89,6 +110,22 @@ public class MemorySpace {
 	 */
 	public void defrag() {
 		/// TODO: Implement defrag test
-		//// Write your code here
+		boolean allGood = true;
+		if (freeList.getFirst() != null)
+		{
+			for (int i = 0; i < freeList.getSize(); i ++) {
+				int nxtBase = freeList.getBlock(i).baseAddress + freeList.getBlock(i).length;
+				for (int j = 0; j < freeList.getSize(); j++) {
+					if (freeList.getBlock(j).baseAddress == nxtBase) {
+						freeList.getBlock(i).length += freeList.getBlock(j).length;
+						freeList.remove(j);
+						allGood = false;
+					}
+				}
+			}
+		}
+		if (allGood == false) {
+			defrag();
+		}
 	}
 }
